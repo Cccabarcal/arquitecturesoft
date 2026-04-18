@@ -1,6 +1,5 @@
 from flask import Flask, request, jsonify
 import json
-import os
 
 app = Flask(__name__)
 
@@ -23,29 +22,25 @@ def realizar_compra():
         }), 200
     
     # POST para procesar compras reales
+    print(f"REQUEST METHOD: {request.method}")
+    print(f"REQUEST HEADERS: {dict(request.headers)}")
+    print(f"REQUEST CONTENT_TYPE: {request.content_type}")
+    print(f"REQUEST DATA: {request.data}")
+    print(f"REQUEST GET_JSON: {request.get_json(silent=True)}")
+    
     data = None
     
-    # Intenta obtener JSON de múltiples formas
-    try:
-        # Opción 1: get_json()
-        data = request.get_json(force=True, silent=True)
-    except:
-        pass
-    
-    # Opción 2: Si el body es JSON raw
-    if not data and request.data:
+    # Intenta obtener JSON
+    if request.is_json:
+        data = request.get_json()
+    elif request.data:
         try:
-            data = json.loads(request.data)
+            data = json.loads(request.data.decode('utf-8'))
         except:
             pass
     
-    # Opción 3: Intenta form data
-    if not data and request.form:
-        data = request.form.to_dict()
-    
-    # Si aún no hay data, devuelve error
     if not data:
-        return jsonify({"error": "No se recibió JSON válido en el body"}), 400
+        return jsonify({"error": "No se recibió JSON válido", "debug": "Revisa los logs del servidor"}), 400
 
     # Simulacion de logica de negocio extraida
     producto_id = data.get('producto_id')
@@ -62,4 +57,4 @@ def realizar_compra():
     }), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    app.run(host='0.0.0.0', port=5000)
