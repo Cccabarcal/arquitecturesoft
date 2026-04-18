@@ -1,36 +1,54 @@
 version: '3.8'
 
 services:
-  # Servicio de Base de Datos (PostgreSQL)
   db:
     image: postgres:15
     volumes:
-      # Persistencia: Esto asegura que los datos sobrevivan si apagas el contenedor
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=tienda_db
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=secret_password
+    ports:
+      - "5432:5432"
 
-  # Servicio de tu API Django
-  web:
+  # El Monolito (v1) - API REST original en Django
+  web_django:
     build: .
-    command: python manage.py runserver 0.0.0.0:8000
+    command: gunicorn Tienda.wsgi:application --bind 0.0.0.0:8000
     volumes:
-      # Hot-Reload: Mapeamos la carpeta actual para que los cambios de código se reflejen sin reiniciar
       - .:/app
     ports:
       - "8000:8000"
     depends_on:
       - db
     environment:
-      # Estas variables deben coincidir con lo que espera tu settings.py
       - DB_NAME=tienda_db
       - DB_USER=postgres
       - DB_PASSWORD=secret_password
-      - DB_HOST=db  # ¡OJO! Aquí usamos el nombre del servicio 'db' como host
+      - DB_HOST=db
       - DB_PORT=5432
 
-# Definición del volumen persistente
+  # El Microservicio (v2) - Nuevo servicio Flask para pagos
+  pagos_flask:
+    build: ./microservicio_pagos
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+    restart: unless-stopped
+
+  # El Cerebro del Ruteo - Nginx como API Gateway
+  nginx:
+    image: nginx:1.25
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - web_django
+      - pagos_flask
+    restart: unless-stopped
+
 volumes:
   postgres_data:
