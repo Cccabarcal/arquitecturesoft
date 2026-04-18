@@ -1,10 +1,15 @@
 from flask import Flask, request, jsonify
+import json
 import os
 
 app = Flask(__name__)
 
-@app.route('/api/v2/comprar', methods=['GET', 'POST'])
+@app.route('/api/v2/comprar', methods=['GET', 'POST', 'OPTIONS'])
 def realizar_compra():
+    # Handle CORS OPTIONS request
+    if request.method == 'OPTIONS':
+        return '', 204
+    
     # GET para pruebas rápidas
     if request.method == 'GET':
         return jsonify({
@@ -18,14 +23,29 @@ def realizar_compra():
         }), 200
     
     # POST para procesar compras reales
+    data = None
+    
+    # Intenta obtener JSON de múltiples formas
     try:
-        # Force parsing JSON desde el request
-        data = request.get_json(force=True)
+        # Opción 1: get_json()
+        data = request.get_json(force=True, silent=True)
     except:
-        # Si no es JSON, intenta desde el body raw
+        pass
+    
+    # Opción 2: Si el body es JSON raw
+    if not data and request.data:
+        try:
+            data = json.loads(request.data)
+        except:
+            pass
+    
+    # Opción 3: Intenta form data
+    if not data and request.form:
         data = request.form.to_dict()
-        if not data:
-            return jsonify({"error": "Debes enviar JSON en el body"}), 400
+    
+    # Si aún no hay data, devuelve error
+    if not data:
+        return jsonify({"error": "No se recibió JSON válido en el body"}), 400
 
     # Simulacion de logica de negocio extraida
     producto_id = data.get('producto_id')
@@ -42,4 +62,4 @@ def realizar_compra():
     }), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=False)
