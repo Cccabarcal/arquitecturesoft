@@ -9,7 +9,7 @@ services:
       - POSTGRES_PASSWORD=secret_password
 
   web_django:
-    build: .
+    image: web_django:latest
     # CAMBIO 1: Usamos Gunicorn en lugar de runserver
     # 'Tienda' es el nombre de la carpeta donde está wsgi.py
     command: gunicorn Tienda.wsgi:application --bind 0.0.0.0:8000
@@ -27,7 +27,7 @@ services:
 
   # CAMBIO 3: Agregamos el Microservicio Flask (Strangler Pattern)
   pagos_flask:
-    build: ./microservicio_pagos
+    image: pagos_flask:latest
     ports:
       - "5000:5000"  # Solo para pruebas iniciales, luego lo cerraremos
     # Sin dependencias de DB, Flask es totalmente independiente
