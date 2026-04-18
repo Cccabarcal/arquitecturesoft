@@ -4,8 +4,9 @@ from rest_framework.views import APIView
 
 from tienda_app.infra.factories import PaymentFactory
 from tienda_app.services import CompraService
+from tienda_app.models import Libro
 
-from .serializers import OrdenInputSerializer
+from .serializers import OrdenInputSerializer, LibroSerializer
 
 
 class CompraAPIView(APIView):
@@ -45,3 +46,21 @@ class CompraAPIView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_409_CONFLICT)
         except Exception:
             return Response({'error': 'Error interno'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class ProductosAPIView(APIView):
+    """
+    Endpoint para listar todos los productos (libros).
+    GET /api/v1/productos/
+    """
+
+    def get(self, request):
+        libros = Libro.objects.all()
+        serializer = LibroSerializer(libros, many=True)
+        return Response(
+            {
+                'mensaje': 'Listado de productos disponibles',
+                'productos': serializer.data,
+            },
+            status=status.HTTP_200_OK,
+        )

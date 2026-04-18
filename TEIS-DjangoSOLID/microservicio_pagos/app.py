@@ -3,8 +3,21 @@ import os
 
 app = Flask(__name__)
 
-@app.route('/api/v2/comprar', methods=['POST'])
+@app.route('/api/v2/comprar', methods=['GET', 'POST'])
 def realizar_compra():
+    # GET para pruebas rápidas
+    if request.method == 'GET':
+        return jsonify({
+            "mensaje": "Microservicio Flask v2 activo",
+            "endpoint": "/api/v2/comprar",
+            "metodos": ["GET", "POST"],
+            "ejemplo_post": {
+                "producto_id": 123,
+                "cantidad": 5
+            }
+        }), 200
+    
+    # POST para procesar compras reales
     data = request.get_json()
 
     # Simulacion de logica de negocio extraida
