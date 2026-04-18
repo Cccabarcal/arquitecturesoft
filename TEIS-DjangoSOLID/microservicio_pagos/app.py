@@ -18,7 +18,14 @@ def realizar_compra():
         }), 200
     
     # POST para procesar compras reales
-    data = request.get_json()
+    try:
+        # Force parsing JSON desde el request
+        data = request.get_json(force=True)
+    except:
+        # Si no es JSON, intenta desde el body raw
+        data = request.form.to_dict()
+        if not data:
+            return jsonify({"error": "Debes enviar JSON en el body"}), 400
 
     # Simulacion de logica de negocio extraida
     producto_id = data.get('producto_id')
@@ -35,4 +42,4 @@ def realizar_compra():
     }), 200
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)
